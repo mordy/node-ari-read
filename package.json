@@ -1,0 +1,19 @@
+{
+  "name": "ari-read",
+  "version": "1.0.1",
+  "description": "Replicates the asterisk READ Dialplan",
+  "main": "index.js",
+  "repository": "mordy/node-ari-read",
+  "keywords": [
+    "node-ari",
+    "ari",
+    "asterisk",
+    "dialplan"
+  ],
+  "author": "Mordy Goldman",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mordy/node-ari-read/issues"
+  },
+  "homepage": "https://github.com/mordy/node-ari-read#readme"
+}
