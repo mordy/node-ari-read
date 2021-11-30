@@ -1,6 +1,6 @@
 {
   "name": "ari-read",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Replicates the asterisk READ Dialplan",
   "main": "index.js",
   "repository": "mordy/node-ari-read",
