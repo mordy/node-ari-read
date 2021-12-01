@@ -2,7 +2,14 @@
 module.exports = (channel, ari) => {
     //the reader returns an async function for us to reuse
     return async (props) => {
-        const { soundFiles, digitsInResponse, attempts, timeout, responseValidCallback, debug } = props
+        const {
+            soundFiles,
+            digitsInResponse = 0,
+            attempts = 3,
+            timeout = 10,
+            responseValidCallback = false,
+            debug = false
+        } = props;
 
         //promise keeps the loop running until we finish it. 
         const value = await new Promise(async (resolve, reject) => {
@@ -39,7 +46,7 @@ module.exports = (channel, ari) => {
                 };
                 setPlayFinishListener(attemptLimitFinished);
 
-                channel.play({ media: 'sound:goodbye' }, state.playback, function (err) {});
+                channel.play({ media: 'sound:goodbye' }, state.playback, function (err) { });
             }
 
             /******************************
@@ -57,7 +64,7 @@ module.exports = (channel, ari) => {
                             endCall('timeout limit');
                         };
                         setPlayFinishListener(timeoutReadLimit);
-                        channel.play({ media: 'sound:goodbye' }, state.playback, function (err) {});
+                        channel.play({ media: 'sound:goodbye' }, state.playback, function (err) { });
 
 
                     }, (timeout || 10) * 1000
