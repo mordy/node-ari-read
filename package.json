@@ -8,7 +8,9 @@
     "node-ari",
     "ari",
     "asterisk",
-    "dialplan"
+    "dialplan",
+    "node-ari-client",
+    "ari-client"
   ],
   "author": "Mordy Goldman",
   "license": "ISC",

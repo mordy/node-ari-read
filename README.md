@@ -15,7 +15,7 @@ $ npm i ari-read
 
 **Step 1:**
 
- After your call starts, create your a `reader` for your channel, pass in the `channel` and `ari`. You need exactly one reader per channel.
+ After `ari` begins a new call use the `readerFactory` to create a `read` function for the channel, the factory requires 2 params exactly, the `channel` and `ari` variable. You need one `read` per channel.
 
 *Params*
 - `incoming` the incoming channel
@@ -23,23 +23,23 @@ $ npm i ari-read
 
 **Step 2:**
 
-Each time you want to read one or more files and get a DTMF Response, `await` your `reader`. Pass a single object to this function, the object properties are below
+To read one or more files and get a DTMF Response, `await` your `read` function. Pass a single object to this function, the object properties are below
 
-The reader can be passed as a parameter to other parts of your application.
+The `read` function can be passed as a parameter to other parts of your application.
 
 *Object properties*
-- `soundFiles` - array required; list of  filenames to read
-- `digitsInResponse` - int, number of digits requested, `0` will just read and return on completion, default 0
-- `attempts` - int required, number of invalid attempts to allow before terminating call, default 3
-- `timeout` - int required, number of seconds of inactivity to allow before terminating call, default 10
+- `soundFiles` - array of  filenames to read (required)
+- `digitsInResponse` - int number of digits requested, `0` will just read and return on completion, default `0`
+- `attempts` - int required, number of invalid attempts to allow before terminating call, default `3`
+- `timeout` - int required, number of seconds of inactivity to allow before terminating call, default `10`
 - `responseValidCallback` - callback function to test whether the response is valid or not, default is that all responses are valid
-- `debug` - if set to `true` it will read out some debug commands, default is false
+- `debug` - if set to `true` it will read out some debug commands, default `false`
 
 
 ## Example
 ```js
 const client = require('ari-client');
-const read = require("ari-read");
+const readerFactory = require('ari-read');
 
 client.connect('http://localhost:8088', 'user', 'secret')
   .then((ari)=> {
@@ -47,21 +47,18 @@ client.connect('http://localhost:8088', 'user', 'secret')
     ari.once('StasisStart',  async (event, incoming)=> {
         incoming.answer().then(async () => {
             //create reader
-            const reader = read(incoming, ari);
+            const read = readerFactory(incoming, ari);
 
-            //reader without response
-            await reader(
+            //read without response
+            await read(
                 audioFiles: ['welcome'],
                 digitsInResponse: 0,
-                responseValidCallback: () => true
             )
     
-            //reader with response, must be * or a digit between 1 and 3
-            const selection = await reader({
+            //read with response, must be * or a digit between 1 and 3
+            const selection = await read({
                 audioFiles: [file1, file2], 
                 digitsInResponse: 1, 
-                attempts: 3, 
-                timeout: 10, 
                 responseValidCallback:  (num) => {
                     return num=='*' || (num > 0 && num <= 3)
                 }
@@ -69,7 +66,8 @@ client.connect('http://localhost:8088', 'user', 'secret')
                 (err) => { console.log(err) }
             );
 
-            doSomethingWith(selection); //
+            //now you can do an action with your selection
+            doSomething(selection); 
         })
     });
     //connect to the statis app
@@ -80,32 +78,31 @@ client.connect('http://localhost:8088', 'user', 'secret')
 
 ## Example using TTS (Text-to-Speech)
 
-This helper replaces the `reader` in the above example with one that will perform TTS before returning the file. Instead of sending `soundFiles` you instead send a `text` param.
+This example replaces the `readerFactory` in the above example with one that will perform TTS before returning the file. Instead of sending `soundFiles` to this helper, send an array of `text` to read.
 
 ```js
-const read = require("ari-read");
+const readerFactory = require("ari-read");
 
 const tts await (string) => {
     //use your favorite library and return the filename you generate.
 }
 
-const readWithTTS = (channel, ari) => {
-    const reader = read(channel, ari);
+const readerFactoryWithTTS = (channel, ari) => {
+    const read = readerFactory(channel, ari);
 
     //the reader returns an async function for us to await
     return async (props) => {
         const { text} = props;
 
         let soundFiles = await Promise.all((typeof text === 'string' ? [text] : text).map(s => tts(s)));
-        return await reader({soundFiles, ...props})
+        return await read({soundFiles, ...props})
     }
 }
-
-module.exports = readWithTTS;
+module.exports = readerFactoryWithTTS;
 ```
 
 ## Concurrency Notes ##
-This code has been optimized to run at very high call load (has been tested at 300 concurrent on 4 CPUs)
-  - Asterisk ships with low version of node js, 10 has improved performance and works better at high load.
-  - Transcoding can use up CPU resources fast, so use source files that are less CPU intensive
-  - You can setup clustering on the ARI App each process connects to a different statis app, let the dialplan load balance which calls go to which statis app
+This code has been optimized to run at high call load (Author has tested with 300 on concurrent on 4 CPUs)
+  - Asterisk ships with low version of nodejs, nodejs 10 has improved performance with async/promises and should be faster when at high load.
+  - Transcoding can use significant CPU, ensure that the source files use codecs that use the least CPU for best performance.
+  - If you setup clustering on the ARI App, you can give each process a different statis app to connect to. The dialplan can load balance between the statis apps.
